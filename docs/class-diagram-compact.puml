@@ -1,0 +1,196 @@
+@startuml
+top to bottom direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 25
+skinparam ranksep 35
+hide empty members
+
+package "Models / Domain" {
+  class User <<Model>> {
+    - id: int
+    - name: string
+    - email: string
+    - passwordHash: string
+    - role: string
+    + authenticate(password: string): boolean
+    + updateProfile(name: string, email: string): boolean
+    + changePassword(oldPassword: string, newPassword: string): boolean
+    + hasRole(role: string): boolean
+    + getDisplayName(): string
+  }
+
+  class Student <<Role>> {
+    - studentNumber: string
+    - groupId: int
+    - enrollmentDate: Date
+    - studyStatus: string
+    - lastSubmissionAt: DateTime
+    + listAssignments(courseId: int): List~Assignment~
+    + submitWork(assignmentId: int, result: string): Submission
+    + resubmitWork(submissionId: int, result: string): boolean
+    + viewGrades(courseId: int): List~Grade~
+    + canSubmit(assignmentId: int): boolean
+  }
+
+  class Teacher <<Role>> {
+    - teacherNumber: string
+    - department: string
+    - office: string
+    - employmentDate: Date
+    - active: boolean
+    + createAssignment(title: string, courseId: int): Assignment
+    + updateAssignment(assignmentId: int, title: string): boolean
+    + listSubmissions(assignmentId: int): List~Submission~
+    + gradeWork(submissionId: int, score: int): Grade
+    + returnForRevision(submissionId: int, comment: string): boolean
+  }
+
+  class Group <<Model>> {
+    - id: int
+    - name: string
+    - studyYear: int
+    - specialty: string
+    - admissionYear: int
+    + addStudent(studentId: int): boolean
+    + removeStudent(studentId: int): boolean
+    + getStudents(): List~Student~
+    + assignCourse(courseId: int): boolean
+    + getCourses(): List~Course~
+  }
+
+  class Course <<Model>> {
+    - id: int
+    - title: string
+    - description: string
+    - teacherId: int
+    - semester: int
+    + updateDetails(title: string, description: string): boolean
+    + assignTeacher(teacherId: int): boolean
+    + addGroup(groupId: int): boolean
+    + getAssignments(): List~Assignment~
+    + getGroups(): List~Group~
+  }
+
+  class AssignmentType <<Model>> {
+    - id: int
+    - name: string
+    - description: string
+    - active: boolean
+    - sortOrder: int
+    + rename(name: string): boolean
+    + updateDescription(description: string): boolean
+    + activate(): boolean
+    + deactivate(): boolean
+    + getAssignments(): List~Assignment~
+  }
+
+  class Assignment <<Model>> {
+    - id: int
+    - courseId: int
+    - groupId: int
+    - typeId: int
+    - title: string
+    - description: string
+    - deadline: DateTime
+    + updateDetails(title: string, description: string): boolean
+    + setDeadline(deadline: DateTime): boolean
+    + assignToGroup(groupId: int): boolean
+    + isOverdue(now: DateTime): boolean
+    + getSubmissions(): List~Submission~
+  }
+
+  class Submission <<Model>> {
+    - id: int
+    - assignmentId: int
+    - studentId: int
+    - result: string
+    - status: string
+    - submittedAt: DateTime
+    + updateResult(result: string): boolean
+    + submit(now: DateTime): boolean
+    + markForReview(): boolean
+    + returnForRevision(comment: string): boolean
+    + markGraded(): boolean
+  }
+
+  class Grade <<Model>> {
+    - id: int
+    - submissionId: int
+    - teacherId: int
+    - score: int
+    - comment: string
+    - gradedAt: DateTime
+    + setScore(score: int): boolean
+    + setComment(comment: string): boolean
+    + updateGrade(score: int, comment: string): boolean
+    + isPassing(minScore: int): boolean
+    + getSummary(): string
+  }
+}
+
+package "Controllers (MVC)" {
+  class CourseController <<Controller>> {
+    - courseModel: Course
+    - groupModel: Group
+    - currentUser: User
+    - selectedCourseId: int
+    - pageSize: int
+    + index(page: int): View
+    + show(id: int): View
+    + store(title: string, description: string, teacherId: int): Response
+    + update(id: int, title: string): Response
+    + destroy(id: int): Response
+  }
+
+  class AssignmentController <<Controller>> {
+    - assignmentModel: Assignment
+    - courseModel: Course
+    - typeModel: AssignmentType
+    - currentUser: User
+    - pageSize: int
+    + index(courseId: int): View
+    + create(courseId: int): View
+    + store(title: string, courseId: int, groupId: int, typeId: int, deadline: DateTime): Response
+    + update(id: int, title: string, deadline: DateTime): Response
+    + destroy(id: int): Response
+  }
+
+  class SubmissionController <<Controller>> {
+    - submissionModel: Submission
+    - assignmentModel: Assignment
+    - gradeModel: Grade
+    - currentUser: User
+    - maxResultLength: int
+    + create(assignmentId: int): View
+    + store(assignmentId: int, result: string): Response
+    + resubmit(id: int, result: string): Response
+    + grade(id: int, score: int, comment: string): Response
+    + returnForRevision(id: int, comment: string): Response
+  }
+}
+
+' Inheritance: specialized roles share common user behavior
+User <|-- Student
+User <|-- Teacher
+
+' Aggregation: a student can exist independently of one group
+Group "1" o-- "0..*" Student : members
+
+' Associations
+Teacher "1" -- "0..*" Course : teaches
+Group "0..*" -- "0..*" Course : studies
+Course "1" -- "0..*" Assignment : contains
+Group "1" -- "0..*" Assignment : receives
+AssignmentType "1" -- "0..*" Assignment : categorizes
+Student "1" -- "0..*" Submission : submits
+Assignment "1" -- "0..*" Submission : collects
+
+' Composition: a grade belongs to a submission
+Submission "1" *-- "0..1" Grade : evaluation
+
+' MVC dependencies
+CourseController ..> Course : manages
+AssignmentController ..> Assignment : manages
+SubmissionController ..> Submission : manages
+@enduml
