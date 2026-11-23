@@ -5,7 +5,7 @@ $subjects = [
     'Програмування',
     'Інформатика',
     'Англійська мова',
-    'Фізика'
+    'Фізика',
 ];
 
 sort($subjects);
@@ -17,7 +17,7 @@ $assignment = [
     'typeId' => 1,
     'title' => 'Лабораторна робота №3',
     'description' => 'Основи PHP: структури даних і функції',
-    'deadline' => new DateTime('2026-12-01 23:59:00')
+    'deadline' => new DateTime('2026-12-01 23:59:00'),
 ];
 
 ?>
@@ -31,14 +31,14 @@ $assignment = [
 <body>
     <h2>Список навчальних предметів</h2>
     <ul>
-        <?php foreach ($subjects as $subject): ?>
+        <?php foreach ($subjects as $subject) { ?>
             <li><?= htmlspecialchars($subject) ?></li>
-        <?php endforeach; ?>
+        <?php } ?>
     </ul>
 
     <h2>Інформація про навчальне завдання</h2>
     <ul>
-        <?php foreach ($assignment as $key => $value): ?>
+        <?php foreach ($assignment as $key => $value) { ?>
             <li>
                 <?= htmlspecialchars($key) ?>:
                 <?= htmlspecialchars(
@@ -47,7 +47,7 @@ $assignment = [
                         : (string) $value
                 ) ?>
             </li>
-        <?php endforeach; ?>
+        <?php } ?>
     </ul>
 </body>
 </html>

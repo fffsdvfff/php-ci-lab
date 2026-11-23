@@ -14,7 +14,7 @@ function findGreaterThanRight(array $numbers): array
 
     return [
         'indices' => $indices,
-        'count' => count($indices)
+        'count' => count($indices),
     ];
 }
 
@@ -30,7 +30,7 @@ function findMatchingWords(string $text): array
         $first = $firstLetters[0];
         $last = $nextLetters[count($nextLetters) - 1];
 
-        if (preg_match('/^' . preg_quote($first, '/') . '$/iu', $last)) {
+        if (preg_match('/^'.preg_quote($first, '/').'$/iu', $last)) {
             $result[] = $words[$i];
         }
     }
